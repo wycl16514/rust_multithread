@@ -1,4 +1,5 @@
 Mandelbrot set is a math concept, if we draw them on an image, they looks like following:
+
 ![image](https://github.com/wycl16514/rust_multithread/assets/7506958/75c984bf-2531-498e-880a-5a5ee7b9e0c7)
 
 in this section we will try to draw the mandelbrot set as grayscale png file just like above image. Points in the set actually from complex plane and satisfy an
