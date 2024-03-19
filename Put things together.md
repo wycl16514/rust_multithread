@@ -11,13 +11,17 @@ that is the pixel with coordiate (10 ,20) map to complex number {re:12, im:15.5}
 because the y-axis is oppsite for image and complex plane, when y is increase, it will going down on the image but it will going up on complex plane.
 
 let's state the mapping algorithm as following:
+
 1, given image with dimension as: image_width, image_height,  select a mapping area on the complex plane with upper left point marked as upper_left and 
 right bottom point as right_bottom.
+
 2. compute the height and width of the area on complex plane as:
 complex_plane_width = right_bottom.re - upper_left.re;
 complex_plane_height = upper_left.im - lower_right.im;
+
 3. given a pixel with cooridate x, y, we mapp x to the real part of a complex number by  :
 re = upper_left.re + (x / image_width) * complex_plane_width
+
 4, we map y to the imaginary part of the complex number by :
 im = upper_left.im - (y / image_height) * complex_plane_height
 
@@ -60,4 +64,38 @@ fn test_pixel_to_complex_number() {
     );
 }
 ```
-run the command cargo test and make sure the test case can be passed.
+run the command cargo test and make sure the test case can be passed. Now we can draw the Mandelbrot set on an png 
+image. First we setup the dimension of the image (width, height), then we iterate every pixel row by row, convert the
+pixel into complex number, check the number belongs to Mandelbrot set or not, if it is, then we set the color of that
+pixel to black, otherwise we set it to white or gray, the code like following:
+```r
+fn render(
+    pixels: &mut [u8],
+    image_dimension: (usize, usize),
+    complex_upper_left: Complex<f64>,
+    complex_right_bottom: Complex<f64>,
+) {
+    //length of image buf should equal to image dimension
+    assert!(pixels.len() == image_dimension.0 * image_dimension.1);
+    for row in 0..image_dimension.1 {
+        for column in 0..image_dimension.0 {
+            let complex_number = pixel_to_complex_number(
+                image_dimension,
+                (column, row),
+                complex_upper_left,
+                complex_right_bottom,
+            );
+            /*
+            if the complex number use less looping time to escape the ball,
+            the color of the pixel will more approch to white,
+            if the number belongs to the set, the color would be black
+            */
+            pixels[row * image_dimension.0 + column] = match escape_time(complex_number, 255) {
+                None => 0,
+                Some(count) => 255 - count as u8,
+            };
+        }
+    }
+}
+```
+After desciding the color of each pixel, we can draw then as gray scale png image file
