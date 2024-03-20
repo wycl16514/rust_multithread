@@ -139,3 +139,10 @@ and the image drawn like this:
 
 ![mandelbrot](https://github.com/wycl16514/rust_multithread/assets/7506958/19330a94-f75b-4154-ae89-acebc4ba5d25)
 
+It is easy to upgrade the application to multi-thread, we have an image with dimension:(1000, 750), we can split the
+whole image vertically into severay bands, we keep the width as the same, but divide the height into 5 parts,
+each part with height 750/5 = 150, then we treat each band with dimension (1000, 150) as we treat the whole image like
+above:
+```r
+
+```
