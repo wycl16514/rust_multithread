@@ -98,4 +98,44 @@ fn render(
     }
 }
 ```
-After desciding the color of each pixel, we can draw then as gray scale png image file
+After desciding the color of each pixel, we can draw then as gray scale png image file and we have done this before:
+```r
+fn write_png(file_name: &str, pixels: &[u8], bounds: (usize, usize)) -> Result<(), ImageError> {
+    let output = File::create(file_name)?;
+    let encoder = PngEncoder::new(output);
+    encoder.write_image(
+        &pixels,
+        bounds.0 as u32,
+        bounds.1 as u32,
+        ExtendedColorType::L8,
+    )?;
+
+    Ok(())
+}
+```
+Then we put all things together in the main function:
+```r
+fn main() {
+    let image_dimension = (1000, 750);
+    let mut pixels = vec![0; image_dimension.0 * image_dimension.1];
+    let upper_left = Complex {
+        re: -1.20,
+        im: 0.35,
+    };
+    let right_bottom = Complex { re: -1.0, im: 0.20 };
+    render(&mut pixels, image_dimension, upper_left, right_bottom);
+    write_png("mandelbrot.png", &pixels, image_dimension).expect("error writing png file");
+}
+```
+we can run the code and compute its running time by using following command:
+```r
+time cargo run
+```
+the result is like following:
+```r
+cargo run  3.47s user 0.10s system 60% cpu 5.899 total
+```
+and the image drawn like this:
+
+![mandelbrot](https://github.com/wycl16514/rust_multithread/assets/7506958/19330a94-f75b-4154-ae89-acebc4ba5d25)
+
