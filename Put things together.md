@@ -142,7 +142,75 @@ and the image drawn like this:
 It is easy to upgrade the application to multi-thread, we have an image with dimension:(1000, 750), we can split the
 whole image vertically into severay bands, we keep the width as the same, but divide the height into 5 parts,
 each part with height 750/5 = 150, then we treat each band with dimension (1000, 150) as we treat the whole image like
-above:
+above. Unfortunately we can't use the multi-thread code as last video because there is a variable scoping and life 
+time problem. This problem is very obscure for us now, therefore we defer it to later videos and we come to the help
+of a crat named crossbeam, add the dependency in cargo.toml:
 ```r
+[dependencies]
+image="0.25.0"
+rand="0.8"
+num="0.4"
+crossbeam="0.8"
+```
+then we split the image into 5 bands vertically and treat each band like treating the whole image as before:
+```r
+fn run_in_multiple_threads() {
+    let image_dimension = (1000, 750);
+    let mut pixels = vec![0; image_dimension.0 * image_dimension.1];
+    let upper_left = Complex {
+        re: -1.20,
+        im: 0.35,
+    };
+    let right_bottom = Complex { re: -1.0, im: 0.20 };
+    //split the image into 5 bands
+    let threads = 5;
+    let rows_per_band = image_dimension.1 / threads;
+
+    /*
+    split the image into several bands, bands is a vector that
+    contain vectors, we can seen it as two dimensional array
+    */
+    {
+        let bands: Vec<&mut [u8]> = pixels
+            .chunks_mut(rows_per_band * image_dimension.0)
+            .collect();
+        crossbeam::scope(|spawner| {
+            for (i, band) in bands.into_iter().enumerate() {
+               /*
+                get the band area on complex plane
+                */
+                let top = rows_per_band * i;
+                let height = rows_per_band;
+                let band_bounds = (image_dimension.0, height);
+
+                let band_upper_left =
+                    pixel_to_complex_number(image_dimension, (0, top), upper_left, right_bottom);
+                let band_bottom_right = pixel_to_complex_number(
+                    image_dimension,
+                    (image_dimension.0, top + height),
+                    upper_left,
+                    right_bottom,
+                );
+                spawner.spawn(move |_| {
+                    render(band, band_bounds, band_upper_left, band_bottom_right);
+                });
+            }
+        })
+        .unwrap();
+
+        write_png("mandelbrot.png", &pixels, image_dimension).expect("error writing png file");
+    }
+}
+
+fn main() {
+    run_in_multiple_threads();
+}
 
 ```
+Now we can run the code using "time cargo run":
+```r
+cargo run  6.40s user 0.12s system 141% cpu 4.597 total
+```
+it turns out slower than single thread, really out of my expectation, there are many reasons for this, but the main 
+goal is to have a feeling for rust programming, we will not waste time on the reason as long as we gain some 
+experience on writing rust code.
